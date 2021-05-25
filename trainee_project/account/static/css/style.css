@@ -1,0 +1,16 @@
+
+p {
+	word-wrap:break-word;
+}
+a{
+	color: black;
+}
+.text-primary {
+    color: #54A9CC!important;
+}
+.text-success {
+    color: #FF758D!important;
+}
+.text-adjust{
+	word-wrap: break-word;
+}
