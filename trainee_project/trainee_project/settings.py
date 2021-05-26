@@ -129,3 +129,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 FILE_DIR = 'files/'
 PROJECT_DIR = Path(__file__).resolve().parent
 TEMP_FILE_DIR = 'temp_files/'
+TEST_FILE_DIR = 'test_files/'

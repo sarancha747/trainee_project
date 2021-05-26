@@ -16,7 +16,6 @@ def repository(request):
     if request.method == 'POST':
         form = FileEditForm(request.POST, request.FILES)
         if form.is_valid():
-            print(form.cleaned_data)
             title = form.cleaned_data['title']
             description = form.cleaned_data['description']
             upload = form.cleaned_data['upload']
@@ -32,8 +31,6 @@ def check_uploaded_file_hash(file_to_save):
     file_hash = hashlib.sha256()
     for chunk in file_to_save.chunks():
         file_hash.update(chunk)
-    print(file_hash.hexdigest())
-
     if file_hash.hexdigest() in FileHash.objects.values_list('file_hash',
                                                              flat=True).filter(file_hash=file_hash.hexdigest()):
         # Хеш есть в базе, возвращаем объект записи в базе
