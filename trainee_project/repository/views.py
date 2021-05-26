@@ -1,10 +1,12 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.contrib.auth.models import User, auth
+from .models import File, FileHash
 from .forms import FileEditForm
 from django.conf import settings
 import filecmp
 import os
+import hashlib
 
 
 @login_required(login_url='login')
@@ -14,44 +16,28 @@ def repository(request):
     if request.method == 'POST':
         form = FileEditForm(request.POST, request.FILES)
         if form.is_valid():
-            file = form.save(commit=False)
-            file_response_code = check_uploaded_file(file.upload.name.replace(" ", "_"), file.upload)
-            file.user = request.user
-            if file_response_code == 1:
-                file.save()
-            if file_response_code == 2:
-                file.upload = settings.FILE_DIR + file.upload.name
-                file.save()
-            if file_response_code == 3:
-                file.save()
+            print(form.cleaned_data)
+            title = form.cleaned_data['title']
+            description = form.cleaned_data['description']
+            upload = form.cleaned_data['upload']
+            real_file_id = check_uploaded_file_hash(upload)
+            File.objects.create(user=user, title=title, description=description,
+                                user_file_title=upload.name, upload=real_file_id)
     else:
         form = FileEditForm
     return render(request, 'repository/repository.html', {'files': files, 'form': form})
 
 
-def check_uploaded_file(file_name, file_to_save):
-    """
-    1 - файл с даним название не найден
-    2 - файл с даним название найден, наполнение соотвествует
-    3 - файл с даним название найден, нонаполнение не соотвествует
-    """
-    main_file_dir = os.path.join(os.path.dirname(settings.PROJECT_DIR), settings.FILE_DIR)
-    temp_file_dir = os.path.join(os.path.dirname(settings.PROJECT_DIR), settings.TEMP_FILE_DIR)
-    if file_name in os.listdir(main_file_dir):
-        # Проверяем вариант когда два пользователя добавил файл с одинаковым именем, но с разным наполнением
-        with open(os.path.join(temp_file_dir, file_name), 'wb+') as destination:
-            for chunk in file_to_save.chunks():
-                destination.write(chunk)
-        common = [file_name]
-        match, mismatch, errors = filecmp.cmpfiles(main_file_dir, temp_file_dir, common, shallow=False)
-        if file_name in match:
-            # Файл найден, но наполнение соотвествует. Не сохранять файл
-            file_response_code = 2
-        else:
-            # Файл найден, нонаполнение не соотвествует. Сохранить файл
-            file_response_code = 3
-        os.remove(os.path.join(temp_file_dir, file_name))
+def check_uploaded_file_hash(file_to_save):
+    file_hash = hashlib.sha256()
+    for chunk in file_to_save.chunks():
+        file_hash.update(chunk)
+    print(file_hash.hexdigest())
+
+    if file_hash.hexdigest() in FileHash.objects.values_list('file_hash',
+                                                             flat=True).filter(file_hash=file_hash.hexdigest()):
+        # Хеш есть в базе, возвращаем объект записи в базе
+        return FileHash.objects.get(file_hash=file_hash.hexdigest())
     else:
-        # Файл не найден. Сохранить файл
-        file_response_code = 1
-    return file_response_code
+        # Хеша нет в базе, создаём запись и возвращаем её
+        return FileHash.objects.create(file_hash=file_hash.hexdigest(), real_file=file_to_save)
