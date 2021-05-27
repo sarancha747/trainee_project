@@ -3,10 +3,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.conf import settings
 
-from .models import File, FileHash
-from .views import repository
-
-# Create your tests here.
+from .models import File
 
 User = get_user_model()
 
@@ -24,7 +21,7 @@ class FileSaveTestCase(TestCase):
         self.test_file_name_1 = 'equal_file_1.txt'
         self.test_file_name_2 = 'equal_file_2.txt'
 
-    def test_first_client_upload(self):
+    def test_1_one_file_save(self):
         def add_first_file():
             self.client.login(username='testuser1', password="password")
             get_response = self.client.get('')
@@ -53,10 +50,19 @@ class FileSaveTestCase(TestCase):
 
         add_first_file()
         add_second_file()
-
+        # Проверяем что хеши у двух юзеров одинаковые
         first_hash = File.objects.get(title='1_test_title')
         second_hash = File.objects.get(title='2_test_title')
         self.assertEqual(first_hash.upload.file_hash, second_hash.upload.file_hash)
 
+        # Проверяем что один файл в папке
         self.assertIn(self.test_file_name_1, os.listdir(self.file_dir))
         self.assertEqual(len(os.listdir(self.file_dir)), 1)
+
+    def test_2_file_folder_clean(self):
+        for filename in os.listdir(self.file_dir):
+            file_path = os.path.join(self.file_dir, filename)
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print('Ошибка при удалении %s. Причина: %s' % (file_path, e))
