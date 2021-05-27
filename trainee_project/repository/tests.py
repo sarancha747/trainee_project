@@ -18,8 +18,6 @@ class FileSaveTestCase(TestCase):
         self.user2.save()
         self.test_file_dir = os.path.join(os.path.dirname(settings.PROJECT_DIR), settings.TEST_FILE_DIR)
         self.file_dir = os.path.join(os.path.dirname(settings.PROJECT_DIR), settings.FILE_DIR)
-        self.test_file_name_1 = 'equal_file_1.txt'
-        self.test_file_name_2 = 'equal_file_2.txt'
         self.first_file_and_user = {
             'username': 'testuser1',
             'password': 'password',
