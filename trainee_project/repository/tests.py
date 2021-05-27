@@ -35,6 +35,16 @@ class FileSaveTestCase(TestCase):
             'test_file_name': 'equal_file_2.txt'
         }
 
+        def equal_testfile_create(path):
+            try:
+                with open(path, "w") as file:
+                    file.write("Text Pext")
+            except Exception as e:
+                print('Ошибка при создании %s. Причина: %s' % (path, e))
+
+        equal_testfile_create(os.path.join(self.test_file_dir, self.first_file_and_user['test_file_name']))
+        equal_testfile_create(os.path.join(self.test_file_dir, self.second_file_and_user['test_file_name']))
+
     def test_1_one_file_save(self):
         def add_file_for_user(file_and_user):
             self.client.login(username=file_and_user['username'], password=file_and_user['password'])
@@ -63,9 +73,13 @@ class FileSaveTestCase(TestCase):
         self.assertEqual(len(os.listdir(self.file_dir)), 1)
 
     def tearDown(self):
-        for filename in os.listdir(self.file_dir):
-            file_path = os.path.join(self.file_dir, filename)
+        def del_files_in_dir(path):
             try:
-                os.remove(file_path)
+                for filename in os.listdir(path):
+                    file_path = os.path.join(path, filename)
+                    os.remove(file_path)
             except Exception as e:
                 print('Ошибка при удалении %s. Причина: %s' % (file_path, e))
+
+        del_files_in_dir(self.file_dir)
+        del_files_in_dir(self.test_file_dir)
